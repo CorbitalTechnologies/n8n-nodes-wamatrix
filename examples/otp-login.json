@@ -1,0 +1,182 @@
+{
+	"name": "WaMatrix: WhatsApp OTP login",
+	"nodes": [
+		{
+			"id": "note",
+			"name": "About this workflow",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [
+				-420,
+				-340
+			],
+			"parameters": {
+				"content": "## WhatsApp OTP\n`POST /wamatrix-otp-send` with `{ \"phone\" }` returns a `reference`.\n`POST /wamatrix-otp-verify` with `{ \"reference\", \"code\" }` returns `{ \"verified\": true | false }`.\n\nPick the **WhatsApp Number** and an approved **Authentication** template in Send OTP.",
+				"width": 380,
+				"height": 240
+			}
+		},
+		{
+			"id": "w1",
+			"name": "Send request",
+			"type": "n8n-nodes-base.webhook",
+			"typeVersion": 2,
+			"position": [
+				0,
+				-100
+			],
+			"webhookId": "",
+			"parameters": {
+				"httpMethod": "POST",
+				"path": "wamatrix-otp-send",
+				"responseMode": "responseNode",
+				"options": {}
+			}
+		},
+		{
+			"id": "otp1",
+			"name": "Send OTP",
+			"type": "n8n-nodes-wamatrix.waMatrix",
+			"typeVersion": 1,
+			"position": [
+				240,
+				-100
+			],
+			"credentials": {
+				"waMatrixApi": {
+					"id": "",
+					"name": "WaMatrix API"
+				}
+			},
+			"parameters": {
+				"resource": "otp",
+				"operation": "send",
+				"channelId": "",
+				"phone": "={{ $json.body.phone }}",
+				"templateId": "",
+				"options": {
+					"purpose": "login",
+					"expiryMinutes": 10
+				}
+			}
+		},
+		{
+			"id": "r1",
+			"name": "Return reference",
+			"type": "n8n-nodes-base.respondToWebhook",
+			"typeVersion": 1.1,
+			"position": [
+				480,
+				-100
+			],
+			"parameters": {
+				"respondWith": "json",
+				"responseBody": "={{ { \"reference\": $json.reference, \"expires_at\": $json.expires_at } }}",
+				"options": {}
+			}
+		},
+		{
+			"id": "w2",
+			"name": "Verify request",
+			"type": "n8n-nodes-base.webhook",
+			"typeVersion": 2,
+			"position": [
+				0,
+				120
+			],
+			"webhookId": "",
+			"parameters": {
+				"httpMethod": "POST",
+				"path": "wamatrix-otp-verify",
+				"responseMode": "responseNode",
+				"options": {}
+			}
+		},
+		{
+			"id": "otp2",
+			"name": "Verify OTP",
+			"type": "n8n-nodes-wamatrix.waMatrix",
+			"typeVersion": 1,
+			"position": [
+				240,
+				120
+			],
+			"credentials": {
+				"waMatrixApi": {
+					"id": "",
+					"name": "WaMatrix API"
+				}
+			},
+			"parameters": {
+				"resource": "otp",
+				"operation": "verify",
+				"reference": "={{ $json.body.reference }}",
+				"code": "={{ $json.body.code }}"
+			}
+		},
+		{
+			"id": "r2",
+			"name": "Return result",
+			"type": "n8n-nodes-base.respondToWebhook",
+			"typeVersion": 1.1,
+			"position": [
+				480,
+				120
+			],
+			"parameters": {
+				"respondWith": "json",
+				"responseBody": "={{ { \"verified\": $json.verified, \"reason\": $json.reason ?? null } }}",
+				"options": {}
+			}
+		}
+	],
+	"connections": {
+		"Send request": {
+			"main": [
+				[
+					{
+						"node": "Send OTP",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Send OTP": {
+			"main": [
+				[
+					{
+						"node": "Return reference",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Verify request": {
+			"main": [
+				[
+					{
+						"node": "Verify OTP",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Verify OTP": {
+			"main": [
+				[
+					{
+						"node": "Return result",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		}
+	},
+	"settings": {
+		"executionOrder": "v1"
+	}
+}

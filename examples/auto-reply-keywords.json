@@ -1,0 +1,161 @@
+{
+	"name": "WaMatrix: keyword auto-reply",
+	"nodes": [
+		{
+			"id": "note",
+			"name": "About this workflow",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [
+				-420,
+				-280
+			],
+			"parameters": {
+				"content": "## Keyword auto-reply\nReplies to customers who ask about prices; everyone else gets a holding reply.\n\n1. Pick your **WhatsApp Number** in both reply nodes.\n2. Change the keyword and texts.\n3. Activate. Free-form replies work because a customer message opens the 24-hour window.",
+				"width": 380,
+				"height": 240
+			}
+		},
+		{
+			"id": "t",
+			"name": "WaMatrix Trigger",
+			"type": "n8n-nodes-wamatrix.waMatrixTrigger",
+			"typeVersion": 1,
+			"position": [
+				0,
+				0
+			],
+			"webhookId": "",
+			"credentials": {
+				"waMatrixApi": {
+					"id": "",
+					"name": "WaMatrix API"
+				}
+			},
+			"parameters": {
+				"events": [
+					"messageReceived"
+				]
+			}
+		},
+		{
+			"id": "if",
+			"name": "Asks about price?",
+			"type": "n8n-nodes-base.if",
+			"typeVersion": 2.2,
+			"position": [
+				240,
+				0
+			],
+			"parameters": {
+				"conditions": {
+					"options": {
+						"caseSensitive": false,
+						"leftValue": "",
+						"typeValidation": "loose"
+					},
+					"conditions": [
+						{
+							"id": "c1",
+							"leftValue": "={{ $json.text }}",
+							"rightValue": "price",
+							"operator": {
+								"type": "string",
+								"operation": "contains"
+							}
+						}
+					],
+					"combinator": "and"
+				},
+				"looseTypeValidation": true,
+				"options": {
+					"ignoreCase": true
+				}
+			}
+		},
+		{
+			"id": "Send price list",
+			"name": "Send price list",
+			"type": "n8n-nodes-wamatrix.waMatrix",
+			"typeVersion": 1,
+			"position": [
+				500,
+				-100
+			],
+			"credentials": {
+				"waMatrixApi": {
+					"id": "",
+					"name": "WaMatrix API"
+				}
+			},
+			"parameters": {
+				"resource": "message",
+				"operation": "sendText",
+				"channelId": "",
+				"sendTo": "phone",
+				"phoneNumber": "={{ $(\"WaMatrix Trigger\").item.json.from }}",
+				"createContact": false,
+				"text": "Thanks for asking! Our current price list: https://example.com/prices"
+			}
+		},
+		{
+			"id": "Send holding reply",
+			"name": "Send holding reply",
+			"type": "n8n-nodes-wamatrix.waMatrix",
+			"typeVersion": 1,
+			"position": [
+				500,
+				100
+			],
+			"credentials": {
+				"waMatrixApi": {
+					"id": "",
+					"name": "WaMatrix API"
+				}
+			},
+			"parameters": {
+				"resource": "message",
+				"operation": "sendText",
+				"channelId": "",
+				"sendTo": "phone",
+				"phoneNumber": "={{ $(\"WaMatrix Trigger\").item.json.from }}",
+				"createContact": false,
+				"text": "Thanks for your message. A team member will reply shortly."
+			}
+		}
+	],
+	"connections": {
+		"WaMatrix Trigger": {
+			"main": [
+				[
+					{
+						"node": "Asks about price?",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Asks about price?": {
+			"main": [
+				[
+					{
+						"node": "Send price list",
+						"type": "main",
+						"index": 0
+					}
+				],
+				[
+					{
+						"node": "Send holding reply",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		}
+	},
+	"settings": {
+		"executionOrder": "v1"
+	}
+}

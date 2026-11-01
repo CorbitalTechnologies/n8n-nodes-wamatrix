@@ -1,0 +1,81 @@
+{
+	"name": "WaMatrix: alert on failed messages",
+	"nodes": [
+		{
+			"id": "note",
+			"name": "About this workflow",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [
+				-420,
+				-280
+			],
+			"parameters": {
+				"content": "## Failed-delivery alert\nWhen WhatsApp reports a message as **failed**, posts the reason to your team.\n\nReplace the URL in **Notify team** with your Slack, Teams or Discord incoming-webhook URL, or swap the node for your chat app node.",
+				"width": 380,
+				"height": 240
+			}
+		},
+		{
+			"id": "t",
+			"name": "WaMatrix Trigger",
+			"type": "n8n-nodes-wamatrix.waMatrixTrigger",
+			"typeVersion": 1,
+			"position": [
+				0,
+				0
+			],
+			"webhookId": "",
+			"credentials": {
+				"waMatrixApi": {
+					"id": "",
+					"name": "WaMatrix API"
+				}
+			},
+			"parameters": {
+				"events": [
+					"messageStatus"
+				],
+				"options": {
+					"statuses": [
+						"failed"
+					]
+				}
+			}
+		},
+		{
+			"id": "http",
+			"name": "Notify team",
+			"type": "n8n-nodes-base.httpRequest",
+			"typeVersion": 4.2,
+			"position": [
+				260,
+				0
+			],
+			"parameters": {
+				"method": "POST",
+				"url": "https://hooks.example.com/your-team-channel",
+				"sendBody": true,
+				"specifyBody": "json",
+				"jsonBody": "={{ { \"text\": \"WhatsApp message to \" + $json.recipient + \" failed: \" + ($json.error_message || \"unknown reason\") + \" (code \" + $json.error_code + \")\" } }}",
+				"options": {}
+			}
+		}
+	],
+	"connections": {
+		"WaMatrix Trigger": {
+			"main": [
+				[
+					{
+						"node": "Notify team",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		}
+	},
+	"settings": {
+		"executionOrder": "v1"
+	}
+}

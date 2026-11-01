@@ -1,0 +1,128 @@
+{
+	"name": "WaMatrix: CRM sync and welcome template",
+	"nodes": [
+		{
+			"id": "note",
+			"name": "About this workflow",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [
+				-420,
+				-300
+			],
+			"parameters": {
+				"content": "## CRM sync + welcome\nPOST `{ \"first_name\", \"phone\", \"email\" }` to this webhook from your CRM or form tool.\n\n1. **Create or Update** keeps one WaMatrix contact per phone number.\n2. Pick the **WhatsApp Number** and your approved welcome **Template**. Body variable `{{1}}` gets the first name.",
+				"width": 380,
+				"height": 240
+			}
+		},
+		{
+			"id": "wh",
+			"name": "New lead",
+			"type": "n8n-nodes-base.webhook",
+			"typeVersion": 2,
+			"position": [
+				0,
+				0
+			],
+			"webhookId": "",
+			"parameters": {
+				"httpMethod": "POST",
+				"path": "wamatrix-new-lead",
+				"options": {}
+			}
+		},
+		{
+			"id": "up",
+			"name": "Create or update contact",
+			"type": "n8n-nodes-wamatrix.waMatrix",
+			"typeVersion": 1,
+			"position": [
+				240,
+				0
+			],
+			"credentials": {
+				"waMatrixApi": {
+					"id": "",
+					"name": "WaMatrix API"
+				}
+			},
+			"parameters": {
+				"resource": "contact",
+				"operation": "upsert",
+				"phone": "={{ $json.body.phone }}",
+				"firstName": "={{ $json.body.first_name }}",
+				"additionalFields": {
+					"email": "={{ $json.body.email }}",
+					"type": "lead"
+				}
+			}
+		},
+		{
+			"id": "tpl",
+			"name": "Send welcome template",
+			"type": "n8n-nodes-wamatrix.waMatrix",
+			"typeVersion": 1,
+			"position": [
+				500,
+				0
+			],
+			"credentials": {
+				"waMatrixApi": {
+					"id": "",
+					"name": "WaMatrix API"
+				}
+			},
+			"parameters": {
+				"resource": "message",
+				"operation": "sendTemplate",
+				"channelId": "",
+				"sendTo": "contact",
+				"contactId": {
+					"__rl": true,
+					"mode": "id",
+					"value": "={{ $json.id }}"
+				},
+				"templateId": "",
+				"variablesInput": "fields",
+				"bodyVariables": {
+					"values": [
+						{
+							"value": "={{ $json.first_name }}"
+						}
+					]
+				},
+				"options": {
+					"idempotencyKey": "=welcome-{{ $json.id }}"
+				}
+			}
+		}
+	],
+	"connections": {
+		"New lead": {
+			"main": [
+				[
+					{
+						"node": "Create or update contact",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Create or update contact": {
+			"main": [
+				[
+					{
+						"node": "Send welcome template",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		}
+	},
+	"settings": {
+		"executionOrder": "v1"
+	}
+}

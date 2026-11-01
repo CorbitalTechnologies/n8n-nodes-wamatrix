@@ -1,0 +1,61 @@
+{
+	"name": "n8n-nodes-wamatrix",
+	"version": "0.1.0",
+	"description": "Send WhatsApp messages and templates, keep contacts in sync, verify customers with WhatsApp OTP, and start workflows the moment a customer replies. n8n nodes for WaMatrix.",
+	"license": "MIT",
+	"homepage": "https://github.com/CorbitalTechnologies/n8n-nodes-wamatrix#readme",
+	"keywords": [
+		"n8n-community-node-package",
+		"n8n",
+		"wamatrix",
+		"whatsapp",
+		"whatsapp-business",
+		"whatsapp-cloud-api"
+	],
+	"author": {
+		"name": "Corbital Technologies",
+		"email": "admin@corbitaltechnologies.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/CorbitalTechnologies/n8n-nodes-wamatrix.git"
+	},
+	"bugs": {
+		"url": "https://github.com/CorbitalTechnologies/n8n-nodes-wamatrix/issues"
+	},
+	"scripts": {
+		"build": "n8n-node build",
+		"build:watch": "tsc --watch",
+		"dev": "n8n-node dev",
+		"lint": "n8n-node lint",
+		"lint:fix": "n8n-node lint --fix",
+		"test": "n8n-node build && node --test \"test/*.test.js\"",
+		"e2e": "n8n-node build && node scripts/e2e/run.js && node scripts/e2e/trigger.js",
+		"release": "n8n-node release",
+		"prepublishOnly": "n8n-node prerelease"
+	},
+	"files": [
+		"dist"
+	],
+	"n8n": {
+		"n8nNodesApiVersion": 1,
+		"strict": true,
+		"credentials": [
+			"dist/credentials/WaMatrixApi.credentials.js"
+		],
+		"nodes": [
+			"dist/nodes/WaMatrix/WaMatrix.node.js",
+			"dist/nodes/WaMatrixTrigger/WaMatrixTrigger.node.js"
+		]
+	},
+	"devDependencies": {
+		"@n8n/node-cli": "*",
+		"eslint": "9.32.0",
+		"prettier": "3.6.2",
+		"release-it": "^21.1.0",
+		"typescript": "5.9.2"
+	},
+	"peerDependencies": {
+		"n8n-workflow": "*"
+	}
+}
